@@ -21,6 +21,8 @@ class UserCardProgress extends Model
     {
         return [
             'completed_at' => 'datetime',
+            'next_review_at' => 'datetime',
+            'review_stage' => 'integer',
         ];
     }
 }

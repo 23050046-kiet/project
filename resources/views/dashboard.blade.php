@@ -45,4 +45,34 @@
     </script>
     @endif
 </section>
+<section class="card" style="margin-top:16px">
+    <h3>Bảng xếp hạng</h3>
+    @php($leaders = isset($leaderboard) ? $leaderboard : collect())
+    @if($leaders->isEmpty())
+        <p class="muted">Chưa có dữ liệu xếp hạng.</p>
+    @else
+    <div style="overflow-x:auto;margin-top:8px">
+        <table style="width:100%;border-collapse:collapse">
+            <thead>
+                <tr style="text-align:left">
+                    <th style="padding:8px;border-bottom:1px solid var(--border)">#TOP</th>
+                    <th style="padding:8px;border-bottom:1px solid var(--border)">Tên</th>
+                    <th style="padding:8px;border-bottom:1px solid var(--border)">Email</th>
+                    <th style="padding:8px;border-bottom:1px solid var(--border)">Số Card Hoàn thành</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($leaders as $idx => $row)
+                <tr>
+                    <td style="padding:8px;border-bottom:1px solid var(--border)">{{ $idx+1 }}</td>
+                    <td style="padding:8px;border-bottom:1px solid var(--border)">{{ $row['name'] }}</td>
+                    <td style="padding:8px;border-bottom:1px solid var(--border)">{{ $row['email'] }}</td>
+                    <td style="padding:8px;border-bottom:1px solid var(--border)"><strong>{{ $row['count'] }}</strong></td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+</section>
 @endsection

@@ -29,7 +29,26 @@ Route::get('/dashboard', function () {
             ->whereNotNull('completed_at')
             ->count();
     }
-    return view('dashboard', compact('total', 'completed'));
+    // Leaderboard: top users by completed cards
+    $leaderRows = \App\Models\UserCardProgress::selectRaw('user_id, COUNT(*) as cnt')
+        ->whereNotNull('completed_at')
+        ->groupBy('user_id')
+        ->orderByDesc('cnt')
+        ->limit(10)
+        ->get();
+    $usersMap = \App\Models\User::whereIn('id', $leaderRows->pluck('user_id'))
+        ->get(['id','name','email'])
+        ->keyBy('id');
+    $leaderboard = $leaderRows->map(function ($row) use ($usersMap) {
+        $u = $usersMap->get($row->user_id);
+        return [
+            'id' => $row->user_id,
+            'name' => $u?->name ?? 'Unknown',
+            'email' => $u?->email ?? '',
+            'count' => (int) $row->cnt,
+        ];
+    });
+    return view('dashboard', compact('total', 'completed', 'leaderboard'));
 })->name('dashboard')->middleware('auth');
 
 // User card play page

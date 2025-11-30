@@ -13,7 +13,7 @@
         ];
     }))
 
-    <div id="card-app" data-cards='@json($cards)' data-completed='@json($completedIds)'></div>
+    <div id="card-app" data-cards='@json($cards)' data-completed='@json($completedIds)' data-due='@json($dueIds)'></div>
 
     <style>
         .flip-wrap{perspective:1000px;max-width:520px;margin:24px auto}
@@ -28,6 +28,9 @@
         .nav-nums .num{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:8px;background:#0b1220;color:var(--text);cursor:pointer}
         .nav-nums .num.active{background:var(--primary);border-color:var(--primary)}
         .nav-nums .num.disabled{opacity:.5;cursor:not-allowed}
+        .nav-nums .num.due{box-shadow:0 0 0 0 rgba(234,179,8,.8); border-color:#eab308; background:#3f3a1f}
+        @keyframes pulseDue{0%{box-shadow:0 0 0 0 rgba(234,179,8,.7)}70%{box-shadow:0 0 0 10px rgba(234,179,8,0)}100%{box-shadow:0 0 0 0 rgba(234,179,8,0)}}
+        .nav-nums .num.due{animation:pulseDue 2s infinite}
     </style>
 
     <div class="flip-wrap">
@@ -56,6 +59,9 @@
         try{ data = JSON.parse(root.getAttribute('data-cards')) || []; }catch(e){}
         try{ completed = JSON.parse(root.getAttribute('data-completed')) || []; }catch(e){}
         var completedSet = new Set(completed);
+        var due = [];
+        try{ due = JSON.parse(root.getAttribute('data-due')) || []; }catch(e){}
+        var dueSet = new Set(due);
         var i = 0;
         var flipEl = document.getElementById('flip-card');
         var frontEl = document.getElementById('front');
@@ -81,7 +87,8 @@
             var allowed = computeAllowedIndex();
             for (var idx=0; idx<data.length; idx++){
                 var btn = document.createElement('button');
-                btn.className = 'num'+(idx===i ? ' active' : '')+ (idx>allowed ? ' disabled' : '');
+                var isDue = data[idx] && dueSet.has(data[idx].id);
+                btn.className = 'num'+(idx===i ? ' active' : '')+ (idx>allowed ? ' disabled' : '') + (isDue ? ' due' : '');
                 btn.textContent = (idx+1);
                 (function(n){
                     btn.addEventListener('click', function(){
@@ -118,7 +125,9 @@
         function markCompleted(){
             var item = data[i];
             if (!item) return;
-            if (completedSet.has(item.id)) return;
+            // Gửi cập nhật nếu là lần đầu hoàn thành hoặc thẻ đang đến hạn ôn
+            var needUpdate = !completedSet.has(item.id) || dueSet.has(item.id);
+            if (!needUpdate) return;
             // send progress
             fetch('{{ route('cards.complete') }}', {
                 method: 'POST',
@@ -127,7 +136,12 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({ desk_id: item.id })
-            }).then(function(){ completedSet.add(item.id); renderNav(); }).catch(function(){});
+            }).then(function(){
+                completedSet.add(item.id);
+                // Vừa ôn xong thẻ đến hạn: bỏ highlight ngay cho UI đồng bộ
+                if (dueSet.has(item.id)) { dueSet.delete(item.id); }
+                renderNav();
+            }).catch(function(){});
         }
 
         flipEl.addEventListener('click', function(){
