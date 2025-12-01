@@ -11,10 +11,10 @@
     <form method="POST" action="{{ route('login.post') }}" class="form-grid">
         @csrf
         <label>Email
-            <input type="email" name="email" value="{{ old('email') }}" required>
+            <input type="email" name="email" value="{{ old('email') }}" required **autocomplete="username"**>
         </label>
         <label>Mật khẩu
-            <input type="password" name="password" required>
+            <input type="password" name="password" required **autocomplete="current-password"**>
         </label>
         <label class="checkbox">
             <input type="checkbox" name="remember"> Ghi nhớ
