@@ -55,6 +55,7 @@
                     <h1 style="font-size:3em; margin-bottom:20px;">Welcome to My Cool Site</h1>
                     <p style="font-size:1.2em; max-width:600px; margin:0 auto 30px;">Discover amazing features and elegant design that fits your style.</p>
                     <a href="#features" style="padding:15px 30px; background:#fff; color:#6B5B95; border-radius:8px; font-weight:bold; text-decoration:none;">Explore Now 👉 login</a>
+                    <small style="display:block; margin-top:30px; opacity:0.8;">Author: PhPh Tuấn Kiệt</small>
                 </section>
 
         </div>
