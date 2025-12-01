@@ -1,59 +1,72 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Flash Card App
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Ứng dụng web flash card đơn giản xây dựng bằng \`php\` và \`javascript\`, quản lý phụ thuộc bằng \`composer\` và \`npm\`. Ứng dụng hỗ trợ tạo, ôn tập, quản lý flash card với phiên ôn luyện theo lặp lại ngắt quãng.
 
-## About Laravel
+## Công nghệ
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Backend: \`php\` (\`laravel\`)
+- Frontend: \`javascript\`
+- Trình quản lý gói: \`composer\`, \`npm\`
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tính năng
+- User / Admin - dang nhap , dang ki 
+- Tạo, sửa, xoá flash card (import file ảnh)
+- Phiên ôn tập với thuật toán lặp lại ngắt quãng đơn giản 10s 10phuts 1 ngay spaced repetition
+- Theo dõi tiến độ và thống kê cơ bản, chart tien dộ, bảng xếp hạng(leaderboard)
+- Giao diện responsive
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Cấu trúc dự án
 
-## Learning Laravel
+- \`public/\`: web root
+- \`app/\`, \`routes/\`, \`database/\`: mã nguồn \`laravel\`
+- \`resources/\`: views, assets
+- \`vendor/\`: phụ thuộc \`composer\`
+- \`node_modules/\`: phụ thuộc \`npm\`
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Cài đặt \& Chạy (Windows)
+0. Hỗ trợ : WAMPP hoac XAMPP
+1. Mở \`VS Code\` hoặc \`PhpStorm\`, kéo dự án về máy.
+2. Đổi tên \`.env.example\` thành \`.env\`.
+3. Sửa cấu hình DB trong \`.env\`:
+    - \`DB_CONNECTION=mysql\`
+    - \`DB_HOST=127.0.0.1\`
+    - \`DB_PORT=3306\`
+    - \`DB_DATABASE=laravel\`
+    - \`DB_USERNAME=root\`
+    - \`DB_PASSWORD=\`
+4. Cài phụ thuộc:
+    - \`composer install\`
+5. Tạo app key:
+    - \`php artisan key:generate\`
+6. Migration:
+    - \`php artisan migrate\`
+7. Seed dữ liệu:
+    - \`php artisan db:seed\`
+8. Liên kết storage:
+    - \`php artisan storage:link\`
+9. Truy cập:
+    - Mở Chrome: \`http://localhost/vibecode/public/\`
+    - Đăng nhập: \`admin@example.com\` /\`admin123\`
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Scripts
 
-## Laravel Sponsors
+- \`npm install\`, \`npm run dev\`, \`npm run build\`
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Ghi chú phát triển
 
-### Premium Partners
+- Thiết kế mô hình \`Card\`, \`ReviewSession\`.
+- Áp dụng MVC của \`laravel\`, mô-đun hoá \`javascript\`.
+- Rà soát mã, sửa lỗi về routing, state management, build.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Tài khoản quản trị (Admin)
 
-## Contributing
+- Email: \`admin@example.com\`
+- Mật khẩu: \`admin123\`
+- Trang quản trị: \`/admin\` (nếu có cấu hình)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Triển khai
 
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- \`composer install --no-dev\`
+- \`php artisan migrate --force\`
+- \`npm run build\`
+- Tr trỏ web server tới \`public/\`
