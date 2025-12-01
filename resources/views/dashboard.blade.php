@@ -4,7 +4,7 @@
 
 @section('content')
 <section class="card">
-    <h2>Dashboard người dùng</h2>
+    <h2>🏠 Dashboard người dùng</h2>
     <p>Xin chào, <strong>{{ auth()->user()->name }}</strong></p>
     <p>
         <a href="{{ route('cards.play') }}" class="btn btn-primary">ẤN VÀ BẮT ĐẦU HỌC NÀO</a>
