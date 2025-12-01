@@ -55,7 +55,13 @@
                     <td style="padding:8px;border-bottom:1px solid var(--border)">{{ $u->id }}</td>
                     <td style="padding:8px;border-bottom:1px solid var(--border)">{{ $u->name }}</td>
                     <td style="padding:8px;border-bottom:1px solid var(--border)">{{ $u->email }}</td>
-                    <td style="padding:8px;border-bottom:1px solid var(--border)">{{ $u->is_admin ? 'Admin' : 'User' }}</td>
+                    <td style="padding:8px;border-bottom:1px solid var(--border)">
+                         @if($u->is_admin)
+                            <strong style="color:var(--primary); font-weight:700;">Admin</strong>
+                        @else
+                            User
+                        @endif
+                    </td>
                     <td style="padding:8px;border-bottom:1px solid var(--border)">
                         <form method="POST" action="{{ route('admin.users.destroy', $u) }}" class="inline" onsubmit="return confirm('Xóa user này?');">
                             @csrf
