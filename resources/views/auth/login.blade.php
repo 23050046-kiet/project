@@ -4,7 +4,7 @@
 
 @section('content')
 <section class="card narrow">
-    <h2>Đăng nhập</h2>
+    <h2>🔑 Đăng nhập</h2>
     @if($errors->any())
         <div class="alert error">{{ $errors->first() }}</div>
     @endif
