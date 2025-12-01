@@ -22,8 +22,6 @@
         <button type="submit" class="btn btn-primary">Đăng nhập</button>
     </form>
     <p class="muted">Chưa có tài khoản? <a href="{{ route('register') }}">Đăng ký</a></p>
-    <p class="muted" style="text-align:right; margin-top:8px;">
-        <a href="{{ route('password.request') }}">Quên mật khẩu?</a>
-    </p>
+    
 </section>
 @endsection
