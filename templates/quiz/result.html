@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Result - {{ quiz.title }} - FlashMaster{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>{{ quiz.title }} - Results</h1>
+            <p class="text-muted">Review your answers</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('quiz.index') }}" class="btn btn-secondary">← Back to Quizzes</a>
+        </div>
+    </div>
+    
+    <!-- Score Summary -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <h2 class="display-4 fw-bold mb-2">{{ attempt.score }}/{{ attempt.total_questions }}</h2>
+            <p class="h3 mb-3">{{ "%.1f"|format(attempt.percentage) }}%</p>
+            
+            {% if attempt.percentage >= 80 %}
+            <div class="alert alert-success d-inline-block px-4 py-2 rounded-pill">
+                🎉 Excellent work! Outstanding performance!
+            </div>
+            {% elif attempt.percentage >= 60 %}
+            <div class="alert alert-info d-inline-block px-4 py-2 rounded-pill">
+                👍 Good job! Well done!
+            </div>
+            {% elif attempt.percentage >= 40 %}
+            <div class="alert alert-warning d-inline-block px-4 py-2 rounded-pill">
+                📚 Good effort! Keep practicing!
+            </div>
+            {% else %}
+            <div class="alert alert-danger d-inline-block px-4 py-2 rounded-pill">
+                💪 Study more and try again!
+            </div>
+            {% endif %}
+            
+            <p class="text-muted mt-3">
+                Completed: {{ attempt.completed_at.strftime('%B %d, %Y at %I:%M %p') }}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Detailed Review -->
+    <div class="row">
+        <div class="col-lg-12">
+            {% for item in result_data %}
+            <div class="card mb-4 border-0 shadow-sm">
+                <!-- Header with Question Number and Status -->
+                <div class="card-header {% if item.user_answer and item.user_answer.is_correct %}bg-success{% else %}bg-danger{% endif %} text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Question {{ loop.index }}</h6>
+                            <p class="mb-0">{{ item.question.question_text }}</p>
+                        </div>
+                        <div class="text-end">
+                            {% if item.user_answer and item.user_answer.is_correct %}
+                            <span class="badge bg-light text-success fs-6">✓ CORRECT</span>
+                            {% else %}
+                            <span class="badge bg-light text-danger fs-6">✗ WRONG</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Answer Options -->
+                <div class="card-body pt-4">
+                    <p class="text-muted small mb-3">Your answer:</p>
+                    <div class="row g-2">
+                        {% for answer in item.answers %}
+                        <div class="col-12">
+                            <!-- Determine styling -->
+                            {% set is_user_answer = item.user_answer and item.user_answer.selected_answer_id == answer.id %}
+                            {% set is_correct = answer.is_correct %}
+                            
+                            {% if is_correct %}
+                                {% set bg_class = "bg-success-light border-success" %}
+                                {% set text_class = "text-success fw-bold" %}
+                                {% set badge_text = "✓ Correct Answer" %}
+                                {% set badge_class = "bg-success" %}
+                            {% elif is_user_answer and not is_correct %}
+                                {% set bg_class = "bg-danger-light border-danger" %}
+                                {% set text_class = "text-danger fw-bold" %}
+                                {% set badge_text = "✗ Your Answer" %}
+                                {% set badge_class = "bg-danger" %}
+                            {% else %}
+                                {% set bg_class = "bg-light border-secondary" %}
+                                {% set text_class = "" %}
+                                {% set badge_text = "" %}
+                                {% set badge_class = "" %}
+                            {% endif %}
+                            
+                            <div class="border-2 p-3 rounded {{ bg_class }}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                   type="radio" 
+                                                   disabled
+                                                   {% if is_user_answer %}checked{% endif %}>
+                                            <label class="form-check-label ms-2 {{ text_class }}">
+                                                {{ answer.answer_text }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% if badge_text %}
+                                    <span class="badge {{ badge_class }} ms-2">{{ badge_text }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="row mt-4">
+        <div class="col-lg-12">
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="{{ url_for('quiz.play', quiz_id=quiz.id) }}" class="btn btn-primary btn-lg">
+                    Retake Quiz
+                </a>
+                <a href="{{ url_for('quiz.index') }}" class="btn btn-secondary btn-lg">
+                    All Quizzes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-success-light {
+        background-color: rgba(25, 135, 84, 0.1) !important;
+    }
+    
+    .bg-danger-light {
+        background-color: rgba(220, 53, 69, 0.1) !important;
+    }
+    
+    .border-success {
+        border-color: #198754 !important;
+    }
+    
+    .border-danger {
+        border-color: #dc3545 !important;
+    }
+    
+    .text-success {
+        color: #198754 !important;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
+    .border-2 {
+        border-width: 2px !important;
+    }
+    
+    .border-secondary {
+        border-color: #6c757d !important;
+    }
+</style>
+{% endblock %}

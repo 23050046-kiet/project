@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Học Cards - FlashMaster{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <h1 class="mb-3">📚 Flashcard Sets</h1>
+            <p class="text-muted">Choose a set to start learning</p>
+        </div>
+    </div>
+
+    <div class="row">
+        {% if desks %}
+            {% for desk in desks %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 desk-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">{{ desk.name_en }}</h5>
+                        
+                        <div class="mb-3">
+                            <p class="text-muted mb-2">
+                                <strong>{{ desk_progresses[desk.id].completed }}</strong> / 
+                                <strong>{{ desk_progresses[desk.id].total }}</strong> finished
+                            </p>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" 
+                                     style="width: {{ desk_progresses[desk.id].percentage }}%"></div>
+                            </div>
+                        </div>
+
+                        <a href="{{ url_for('cards.play', desk_id=desk.id) }}" 
+                           class="btn btn-primary btn-sm w-100">
+                            Start learning →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <strong>No flashcard sets yet.</strong> 
+                <a href="{{ url_for('admin.dashboard') }}">Go to the admin panel to create a new set</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <style>
+        .desk-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+        }
+    </style>
+</div>
+{% endblock %}

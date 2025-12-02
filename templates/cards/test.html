@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Test Cards - VibeCode{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>🧪 Test Page</h1>
+            <p>Checking if cards are loaded...</p>
+        </div>
+    </div>
+
+    {% if cards %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h2>{{ desk.name_en }}</h2>
+            <p><strong>Total cards:</strong> {{ cards | length }}</p>
+            
+            <h3>Cards Data (JSON):</h3>
+            <pre style="background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto;">{{ cards_json_data | tojson }}</pre>
+            
+            <h3>Cards List:</h3>
+            <ul>
+                {% for card in cards %}
+                <li>
+                    <strong>{{ card.question }}</strong> → {{ card.answer }}
+                    <br><small>Image: {{ card.example[:60] }}...</small>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning mt-4">
+        No cards found!
+    </div>
+    {% endif %}
+
+    <div class="mt-4 mb-4">
+        <a href="{{ url_for('cards.play') }}" class="btn btn-primary">Back to Cards</a>
+    </div>
+</div>
+{% endblock %}

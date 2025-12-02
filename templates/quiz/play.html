@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}{{ quiz.title }} - Quiz - FlashMaster{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>{{ quiz.title }}</h1>
+            <p class="text-muted">{{ quiz.description }}</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('quiz.index') }}" class="btn btn-secondary">← Back</a>
+        </div>
+    </div>
+    
+    <!-- Quiz Container -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Progress Bar -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-bold">Question <span id="currentQuestion">1</span> of {{ quiz_data|length }}</span>
+                    <span class="text-muted" id="progressPercent">0%</span>
+                </div>
+                <div class="progress" style="height: 25px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         id="progressBar" 
+                         role="progressbar" 
+                         style="width: 0%" 
+                         aria-valuenow="0" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Question Card -->
+            <form id="quizForm">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Question <span id="questionNumber">1</span></h5>
+                    </div>
+                    <div class="card-body" style="min-height: 300px;">
+                        <!-- Question Text -->
+                        <h6 class="mb-4" id="questionText"></h6>
+                        
+                        <!-- Answer Options -->
+                        <div id="answersContainer" class="options">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation -->
+                    <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+                        <button type="button" id="prevBtn" class="btn btn-secondary" disabled>
+                            ← Previous
+                        </button>
+                        <span id="questionIndicator" class="text-muted small"></span>
+                        <button type="button" id="nextBtn" class="btn btn-primary">
+                            Next →
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Question Tracker -->
+            <div class="mt-4">
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="text-muted small mb-2 w-100">Question Progress:</span>
+                    {% for i in range(quiz_data|length) %}
+                    <button type="button" 
+                            class="btn btn-sm question-tracker" 
+                            data-question="{{ i }}"
+                            title="Question {{ i + 1 }}">
+                        {{ i + 1 }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Result Modal -->
+<div class="modal fade" id="resultModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Quiz Complete!</h5>
+            </div>
+            <div class="modal-body text-center py-5">
+                <h2 class="display-4 fw-bold mb-2" id="finalScore">0/0</h2>
+                <h4 class="mb-3" id="finalPercentage">0%</h4>
+                <p class="h6 text-muted mb-3" id="feedbackMessage"></p>
+                
+                <div class="mt-4">
+                    <a href="#" id="viewDetailsBtn" class="btn btn-primary btn-lg">
+                        View Detailed Results
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .question-tracker {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        font-weight: bold;
+    }
+    
+    .question-tracker.answered {
+        background-color: #28a745;
+        color: white;
+        border-color: #28a745;
+    }
+    
+    .question-tracker.current {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    }
+    
+    .options {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .option-label {
+        padding: 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 0;
+    }
+    
+    .option-label:hover {
+        border-color: #007bff;
+        background-color: #f8f9ff;
+    }
+    
+    .form-check-input:checked ~ .option-label {
+        border-color: #007bff;
+        background-color: #e7f3ff;
+    }
+    
+    .form-check-input {
+        margin-top: 4px;
+    }
+    
+    /* Color-coded answer options */
+    .option-label.answer-a {
+        border-left: 5px solid #007bff;
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .option-label.answer-a:hover {
+        border-color: #007bff;
+        background-color: rgba(0, 123, 255, 0.15);
+    }
+    
+    .option-label.answer-b {
+        border-left: 5px solid #28a745;
+        background-color: rgba(40, 167, 69, 0.05);
+    }
+    
+    .option-label.answer-b:hover {
+        border-color: #28a745;
+        background-color: rgba(40, 167, 69, 0.15);
+    }
+    
+    .option-label.answer-c {
+        border-left: 5px solid #ffc107;
+        background-color: rgba(255, 193, 7, 0.05);
+    }
+    
+    .option-label.answer-c:hover {
+        border-color: #ffc107;
+        background-color: rgba(255, 193, 7, 0.15);
+    }
+    
+    .option-label.answer-d {
+        border-left: 5px solid #dc3545;
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+    
+    .option-label.answer-d:hover {
+        border-color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.15);
+    }
+    
+    /* Badge colors */
+    .badge-a {
+        background-color: #007bff !important;
+    }
+    
+    .badge-b {
+        background-color: #28a745 !important;
+    }
+    
+    .badge-c {
+        background-color: #ffc107 !important;
+        color: #000 !important;
+    }
+    
+    .badge-d {
+        background-color: #dc3545 !important;
+    }
+</style>
+
+<script>
+const quizData = {{ quiz_data | tojson }};
+let currentQuestionIndex = 0;
+let userAnswers = {};
+
+// Map answer data
+const questions = quizData.map((item, idx) => ({
+    id: item.question.id,
+    text: item.question.text,
+    answers: item.answers.map(a => ({
+        id: a.id,
+        text: a.text
+    }))
+}));
+
+function displayQuestion(index) {
+    if (index < 0 || index >= questions.length) return;
+    
+    currentQuestionIndex = index;
+    const question = questions[index];
+    
+    // Update question text and number
+    document.getElementById('questionNumber').textContent = index + 1;
+    document.getElementById('currentQuestion').textContent = index + 1;
+    document.getElementById('questionText').textContent = question.text;
+    document.getElementById('questionIndicator').textContent = `${index + 1} / ${questions.length}`;
+    
+    // Update progress bar
+    const percentage = ((index + 1) / questions.length) * 100;
+    document.getElementById('progressBar').style.width = percentage + '%';
+    document.getElementById('progressPercent').textContent = Math.round(percentage) + '%';
+    
+    // Populate answers
+    const answersContainer = document.getElementById('answersContainer');
+    answersContainer.innerHTML = '';
+    
+    question.answers.forEach((answer, answerIdx) => {
+        const isChecked = userAnswers[question.id] === answer.id;
+        const answerLetter = String.fromCharCode(65 + answerIdx); // A, B, C, D
+        const answerClass = String.fromCharCode(97 + answerIdx); // a, b, c, d
+        const badgeClass = `badge-${answerClass}`;
+        
+        const answerHTML = `
+            <div class="form-check">
+                <input class="form-check-input" 
+                       type="radio" 
+                       name="question_${question.id}" 
+                       id="answer_${answer.id}" 
+                       value="${answer.id}"
+                       ${isChecked ? 'checked' : ''}>
+                <label class="form-check-label option-label w-100 answer-${answerClass}" for="answer_${answer.id}">
+                    <div class="d-flex align-items-center ms-2">
+                        <span class="badge ${badgeClass} me-3">${answerLetter}</span>
+                        <span>${answer.text}</span>
+                    </div>
+                </label>
+            </div>
+        `;
+        answersContainer.innerHTML += answerHTML;
+    });
+    
+    // Add change listener to save answer
+    document.querySelectorAll(`input[name="question_${question.id}"]`).forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            userAnswers[question.id] = parseInt(e.target.value);
+            updateQuestionTracker();
+        });
+    });
+    
+    // Update buttons
+    document.getElementById('prevBtn').disabled = index === 0;
+    document.getElementById('nextBtn').textContent = index === questions.length - 1 ? 'Finish →' : 'Next →';
+    
+    // Update tracker
+    updateQuestionTracker();
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateQuestionTracker() {
+    document.querySelectorAll('.question-tracker').forEach((btn, idx) => {
+        btn.classList.remove('current', 'answered');
+        
+        if (idx === currentQuestionIndex) {
+            btn.classList.add('current');
+        }
+        
+        if (userAnswers[questions[idx].id]) {
+            btn.classList.add('answered');
+        }
+        
+        btn.addEventListener('click', () => displayQuestion(idx));
+    });
+}
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+    if (currentQuestionIndex > 0) {
+        displayQuestion(currentQuestionIndex - 1);
+    }
+});
+
+document.getElementById('nextBtn').addEventListener('click', async () => {
+    if (currentQuestionIndex === questions.length - 1) {
+        // Submit quiz
+        await submitQuiz();
+    } else {
+        displayQuestion(currentQuestionIndex + 1);
+    }
+});
+
+async function submitQuiz() {
+    // Prepare answers in format needed by backend
+    const answers = {};
+    questions.forEach((q, idx) => {
+        answers[q.id] = userAnswers[q.id] || null;
+    });
+    
+    const response = await fetch('{{ url_for("quiz.submit", quiz_id=quiz.id) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ answers: answers })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+        // Show result modal
+        document.getElementById('finalScore').textContent = `${data.score}/${data.total}`;
+        document.getElementById('finalPercentage').textContent = `${data.percentage}%`;
+        
+        let feedback = '';
+        if (data.percentage >= 80) {
+            feedback = '🎉 Excellent work! You really know this!';
+        } else if (data.percentage >= 60) {
+            feedback = '👍 Good job! Keep it up!';
+        } else if (data.percentage >= 40) {
+            feedback = '📚 Good effort! Review the material and try again.';
+        } else {
+            feedback = '💪 Keep practicing! You\'ll improve soon.';
+        }
+        document.getElementById('feedbackMessage').textContent = feedback;
+        
+        // Set result view button - use string replacement approach
+        document.getElementById('viewDetailsBtn').href = '/quiz/{{ quiz.id }}/result/' + data.attempt_id;
+        
+        const modal = new bootstrap.Modal(document.getElementById('resultModal'));
+        modal.show();
+    }
+}
+
+// Initialize
+displayQuestion(0);
+</script>
+{% endblock %}

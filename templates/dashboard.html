@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - FlashMaster{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1>Dashboard</h1>
+        <p class="text-muted">Welcome back, {{ current_user.name }}!</p>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total Cards</h5>
+                <h2>{{ total_cards }}</h2>
+                <p class="text-muted">Available to learn</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Completed</h5>
+                <h2>{{ completed_cards }}/{{ total_cards }}</h2>
+                <div class="progress mt-2">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {% if total_cards > 0 %}{{ (completed_cards/total_cards)*100 }}{% else %}0{% endif %}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Your Rank</h5>
+                <h2>#{{ user_rank }}</h2>
+                <p class="text-muted">On leaderboard</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Desks -->
+{% if top_desks %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📚 Learning Vocabulary</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Desk</th>
+                            <th>Cards Completed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for desk_id, desk_name, reviews in top_desks %}
+                            <tr>
+                                <td><a href="{{ url_for('cards.play', desk_id=desk_id) }}">{{ desk_name }}</a></td>
+                                <td><span class="badge bg-info">{{ reviews }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📝 Quiz Practice</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Test your knowledge with interactive quizzes</p>
+                <a href="{{ url_for('quiz.index') }}" class="btn btn-info w-100">
+                    Go to Quizzes →
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Leaderboard -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">🏆 Global Leaderboard</h5>
+            </div>
+            <div class="card-body">
+                {% if leaderboard %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Cards Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in leaderboard %}
+                                <tr {% if entry.id == current_user.id %}class="table-success"{% endif %}>
+                                    <td><strong>#{{ loop.index }}</strong></td>
+                                    <td>{{ entry.name }}</td>
+                                    <td><small>{{ entry.email }}</small></td>
+                                    <td>
+                                        <span class="badge bg-success">{{ entry.count }}</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-muted text-center">No data yet. Start learning to appear on leaderboard!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+{% if recent_activity %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📝 Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Desk</th>
+                            <th>Question</th>
+                            <th>Result</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in recent_activity %}
+                            <tr>
+                                <td>{{ activity.desk }}</td>
+                                <td><small>{{ activity.question }}</small></td>
+                                <td>
+                                    {% if activity.is_correct %}
+                                        <span class="badge bg-success">✓ Correct</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">✗ Review</span>
+                                    {% endif %}
+                                </td>
+                                <td><small>{{ activity.created_at.strftime('%m-%d %H:%M') }}</small></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Action -->
+<div class="row mt-4">
+    <div class="col-md-12 text-center">
+        <a href="{{ url_for('cards.play') }}" class="btn btn-primary btn-lg">Continue Learning</a>
+    </div>
+</div>
+{% endblock %}

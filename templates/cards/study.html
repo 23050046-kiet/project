@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Study - {{ desk.name_en }} - VibeCode{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>{{ desk.name_en }}</h1>
+                <p class="text-muted">{{ cards|length }} cards to study</p>
+            </div>
+            <a href="{{ url_for('cards.play') }}" class="btn btn-secondary">← Back to Desks</a>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="progress mb-4" style="height: 30px;">
+            <div class="progress-bar bg-success" role="progressbar" 
+                 style="width: 0%; display: none;" id="progressBar">
+                <span id="progressText">0/0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if cards %}
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <!-- Study Card Container -->
+            <div id="studyContainer">
+                {% for card in cards %}
+                    <div class="study-card mb-4" data-card-id="{{ card.id }}" style="display: none;">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Card <span class="card-number">1</span>/{{ cards|length }}</h5>
+                                    <small>{{ desk.name_en }}</small>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <!-- Question Section -->
+                                <div class="question-section mb-4">
+                                    <small class="text-muted">Question:</small>
+                                    <h3 class="question-text">{{ card.question }}</h3>
+                                </div>
+
+                                <!-- Answer Section (Hidden initially) -->
+                                <div class="answer-section" style="display: none;">
+                                    <small class="text-muted">Answer:</small>
+                                    <h4 class="answer-text text-success">{{ card.answer }}</h4>
+                                    
+                                    {% if card.example %}
+                                        <div class="mt-3 p-3 bg-light rounded">
+                                            <small class="text-muted">Example:</small>
+                                            <p class="mb-0 example-text">{{ card.example }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Buttons -->
+                                <div class="action-buttons mt-4">
+                                    <button class="btn btn-lg btn-secondary reveal-btn w-100" 
+                                            data-card-id="{{ card.id }}">
+                                        👀 Reveal Answer
+                                    </button>
+                                </div>
+
+                                <!-- Feedback Buttons (Hidden initially) -->
+                                <div class="feedback-buttons mt-3" style="display: none;">
+                                    <div class="d-grid gap-2 d-md-flex">
+                                        <button class="btn btn-lg btn-danger feedback-btn" 
+                                                data-correct="false" data-card-id="{{ card.id }}">
+                                            ✗ Need to Review
+                                        </button>
+                                        <button class="btn btn-lg btn-success feedback-btn" 
+                                                data-correct="true" data-card-id="{{ card.id }}">
+                                            ✓ Got it Right!
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Status Badge -->
+                                <div class="mt-4">
+                                    {% if card.id in user_card_reviews %}
+                                        {% if card.id in due_card_ids %}
+                                            <span class="badge bg-warning" style="font-size: 1rem;">🔄 Due for Review</span>
+                                        {% else %}
+                                            <span class="badge bg-success" style="font-size: 1rem;">✓ Reviewed</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-info" style="font-size: 1rem;">New Card</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Navigation -->
+            <div class="navigation-buttons mt-4 mb-4">
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-secondary" id="prevBtn" style="display: none;">← Previous</button>
+                    <button class="btn btn-secondary" id="nextBtn">Next →</button>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary" style="display: none; text-align: center;" id="summary">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>Study Session Complete!</h3>
+                        <p class="lead mt-4">
+                            You reviewed <strong id="totalReviewed">0</strong> cards
+                        </p>
+                        <p id="correctCount" class="text-success"></p>
+                        <div class="mt-4">
+                            <a href="{{ url_for('cards.play') }}" class="btn btn-primary btn-lg">Back to Desks</a>
+                            <button class="btn btn-secondary btn-lg" id="restartBtn">Study Again</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-info text-center" role="alert">
+        <h4>No cards in this desk yet</h4>
+        <p>Check back later or create new cards for this desk.</p>
+        <a href="{{ url_for('cards.play') }}" class="btn btn-primary">Go Back</a>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const cards = document.querySelectorAll('.study-card');
+const totalCards = cards.length;
+let currentIndex = 0;
+let reviewedCount = 0;
+let correctCount = 0;
+
+function showCard(index) {
+    // Hide all cards
+    cards.forEach(card => {
+        card.style.display = 'none';
+    });
+    
+    if (index >= 0 && index < totalCards) {
+        cards[index].style.display = 'block';
+        document.querySelector('.card-number').textContent = index + 1;
+        
+        // Reset answer display
+        const answerSection = cards[index].querySelector('.answer-section');
+        const actionButtons = cards[index].querySelector('.action-buttons');
+        const feedbackButtons = cards[index].querySelector('.feedback-buttons');
+        
+        answerSection.style.display = 'none';
+        actionButtons.style.display = 'block';
+        feedbackButtons.style.display = 'none';
+        
+        // Update navigation buttons
+        document.getElementById('prevBtn').style.display = currentIndex > 0 ? 'block' : 'none';
+        document.getElementById('nextBtn').textContent = currentIndex === totalCards - 1 ? 'Finish' : 'Next →';
+    }
+    
+    updateProgressBar();
+}
+
+function updateProgressBar() {
+    const percentage = ((currentIndex + 1) / totalCards) * 100;
+    const progressBar = document.getElementById('progressBar');
+    progressBar.style.width = percentage + '%';
+    document.getElementById('progressText').textContent = (currentIndex + 1) + '/' + totalCards;
+}
+
+// Reveal answer
+document.querySelectorAll('.reveal-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const cardId = this.dataset.cardId;
+        const card = document.querySelector(`[data-card-id="${cardId}"]`);
+        
+        card.querySelector('.answer-section').style.display = 'block';
+        card.querySelector('.action-buttons').style.display = 'none';
+        card.querySelector('.feedback-buttons').style.display = 'block';
+    });
+});
+
+// Feedback buttons
+document.querySelectorAll('.feedback-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const isCorrect = this.dataset.correct === 'true';
+        const cardId = parseInt(this.dataset.cardId);
+        
+        // Send review to server
+        fetch('{{ url_for("cards.review_card") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                card_id: cardId,
+                is_correct: isCorrect
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                reviewedCount++;
+                if (isCorrect) correctCount++;
+                
+                // Move to next card
+                if (currentIndex < totalCards - 1) {
+                    currentIndex++;
+                    showCard(currentIndex);
+                } else {
+                    showSummary();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error saving review');
+        });
+    });
+});
+
+// Navigation
+document.getElementById('prevBtn').addEventListener('click', function() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        showCard(currentIndex);
+    }
+});
+
+document.getElementById('nextBtn').addEventListener('click', function() {
+    if (currentIndex < totalCards - 1) {
+        currentIndex++;
+        showCard(currentIndex);
+    } else {
+        showSummary();
+    }
+});
+
+function showSummary() {
+    document.getElementById('studyContainer').style.display = 'none';
+    document.querySelector('.navigation-buttons').style.display = 'none';
+    document.getElementById('summary').style.display = 'block';
+    document.getElementById('totalReviewed').textContent = reviewedCount;
+    
+    if (reviewedCount > 0) {
+        const percentage = ((correctCount / reviewedCount) * 100).toFixed(1);
+        document.getElementById('correctCount').innerHTML = 
+            `You answered <strong>${correctCount}</strong> correctly (${percentage}%)`;
+    }
+}
+
+document.getElementById('restartBtn').addEventListener('click', function() {
+    location.reload();
+});
+
+// Initialize
+if (totalCards > 0) {
+    showCard(0);
+} else {
+    showSummary();
+}
+</script>
+{% endblock %}

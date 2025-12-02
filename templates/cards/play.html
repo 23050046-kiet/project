@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block title %}Học Card - VibeCode{% endblock %}
+
+{% block content %}
+<section class="container mt-4 mb-5">
+    {% if cards %}
+    <!-- Header with desk name and back button -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="mb-2">📚 {{ desk.name_en }}</h2>
+            <p class="text-muted">Bấm để lật xem đáp án</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('cards.play') }}" class="btn btn-outline-secondary btn-sm">← Quay lại</a>
+        </div>
+    </div>
+
+    <!-- Hidden data container for JavaScript -->
+    <div id="card-app" 
+         data-cards='{{ cards_json_data | tojson }}'
+         data-completed='{{ completed_ids | tojson }}'
+         data-due='{{ due_ids | tojson }}'
+         style="display: none;"></div>
+
+    <style>
+        .flip-wrap {
+            perspective: 1000px;
+            max-width: 520px;
+            margin: 24px auto;
+        }
+        
+        .flip-card {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        
+        .flip-card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .flip-face {
+            position: absolute;
+            inset: 0;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0b1220 0%, #1a2a3a 100%);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backface-visibility: hidden;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .flip-face img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+        
+        .flip-face.back {
+            transform: rotateY(180deg);
+        }
+        
+        .flip-face img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+        
+        .counter {
+            margin-top: 8px;
+            text-align: center;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .nav-nums {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-nums .num {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: #f8f9fa;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .nav-nums .num:hover:not(.disabled) {
+            background: #e9ecef;
+            border-color: #0d6efd;
+            transform: translateY(-2px);
+        }
+        
+        .nav-nums .num.active {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+        
+        .nav-nums .num.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #e9ecef;
+        }
+        
+        .nav-nums .num.due {
+            border-color: #eab308;
+            background: #fff3cd;
+            color: #856404;
+            animation: pulseDue 2s infinite;
+        }
+        
+        @keyframes pulseDue {
+            0% {
+                box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(234, 179, 8, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(234, 179, 8, 0);
+            }
+        }
+        
+        .progress-info {
+            text-align: center;
+            margin-top: 24px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #0d6efd;
+        }
+    </style>
+
+    <!-- Flip Card Interface -->
+    <div class="flip-wrap">
+        <div class="flip-card" id="flip-card">
+            <div class="flip-face front" id="front">
+                <div class="text-muted">Bấm để lật xem nghĩa</div>
+            </div>
+            <div class="flip-face back" id="back">
+                <div class="text-muted">…</div>
+            </div>
+        </div>
+        <div class="nav-nums" id="nav-nums"></div>
+        <div class="controls">
+            <button class="btn btn-outline-secondary" id="prev">⟵ Trước</button>
+            <button class="btn btn-primary" id="flip">Lật thẻ</button>
+            <button class="btn btn-outline-secondary" id="next">Sau ⟶</button>
+        </div>
+        <div class="counter" id="counter">0 / 0</div>
+    </div>
+
+    <div class="progress-info">
+        <p class="mb-0">
+            <small>
+                💡 <strong>Mẹo:</strong> Lật thẻ trước khi sang thẻ tiếp theo để đánh dấu hoàn thành
+            </small>
+        </p>
+    </div>
+
+    {% else %}
+    <!-- No cards message -->
+    <div class="alert alert-warning text-center mt-5">
+        <h4>Chưa có card nào trong bộ này</h4>
+        <p class="mb-0">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-primary mt-2">
+                Vào Admin để tạo card
+            </a>
+        </p>
+    </div>
+    {% endif %}
+</section>
+
+<script>
+(function(){
+    console.log('=== CARDS.JS INIT ===');
+    var root = document.getElementById('card-app');
+    console.log('Root element:', root);
+    if (!root) { console.log('No root element!'); return; }
+    
+    // Visual debug indicator
+    var debugDiv = document.createElement('div');
+    debugDiv.style = 'position:fixed;bottom:10px;left:10px;background:#000;color:#0f0;padding:10px;font-family:monospace;z-index:9999;';
+    debugDiv.id = 'debug-output';
+    debugDiv.textContent = 'Loading...';
+    document.body.appendChild(debugDiv);
+    
+    function setDebug(text) {
+        document.getElementById('debug-output').textContent = text;
+    }
+    
+    setDebug('Parsing JSON...');
+    var data = [];
+    var completed = [];
+    try { data = JSON.parse(root.getAttribute('data-cards')) || []; } catch(e){console.error('Parse error:', e); setDebug('JSON Parse Error: ' + e);}
+    setDebug('Loaded ' + data.length + ' cards');
+    console.log('Loaded cards:', data.length);
+    try { completed = JSON.parse(root.getAttribute('data-completed')) || []; } catch(e){}
+    var completedSet = new Set(completed);
+    var due = [];
+    try { due = JSON.parse(root.getAttribute('data-due')) || []; } catch(e){}
+    var dueSet = new Set(due);
+    
+    var i = 0;
+    var flipEl = document.getElementById('flip-card');
+    var frontEl = document.getElementById('front');
+    var backEl = document.getElementById('back');
+    var counterEl = document.getElementById('counter');
+    var navNumsEl = document.getElementById('nav-nums');
+    var prevBtn = document.getElementById('prev');
+    var nextBtn = document.getElementById('next');
+    var flipBtn = document.getElementById('flip');
+    var hasFlippedCurrent = false;
+
+    function computeAllowedIndex() {
+        var allowed = 0;
+        for (var k = 0; k < data.length; k++) {
+            var id = data[k].id;
+            if (completedSet.has(id)) {
+                allowed = k + 1;
+            } else {
+                break;
+            }
+        }
+        return allowed;
+    }
+
+    function renderNav() {
+        navNumsEl.innerHTML = '';
+        var allowed = computeAllowedIndex();
+        for (var idx = 0; idx < data.length; idx++) {
+            var btn = document.createElement('button');
+            var isDue = data[idx] && dueSet.has(data[idx].id);
+            var classes = 'num';
+            if (idx === i) classes += ' active';
+            if (idx > allowed) classes += ' disabled';
+            if (isDue) classes += ' due';
+            btn.className = classes;
+            btn.textContent = (idx + 1);
+            (function(n) {
+                btn.addEventListener('click', function() {
+                    if (n > allowed) return;
+                    setIndex(n);
+                });
+            })(idx);
+            navNumsEl.appendChild(btn);
+        }
+    }
+
+    function render() {
+        console.log('Rendering card', i, 'of', data.length);
+        if (!data.length) {
+            console.log('No data available');
+            frontEl.innerHTML = '<div class="text-muted">Chưa có card nào</div>';
+            backEl.innerHTML = '<div class="text-muted">Thêm card trong Admin</div>';
+            counterEl.textContent = '0 / 0';
+            return;
+        }
+        var item = data[i];
+        console.log('Current item:', item);
+        
+        // Display image on front (from example field which contains image URL)
+        if (item.img && item.img.startsWith('http')) {
+            // Load image and display
+            var imgHtml = '<img src="' + item.img + '" alt="' + escapeHtml(item.question) + 
+                         '" style="max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.1);" ' +
+                         'onerror="this.parentElement.innerHTML=\'<div style=\\\"font-size:3rem;\\\" >📷</div>\\'">';
+            frontEl.innerHTML = imgHtml;
+        } else {
+            // Fallback to text
+            frontEl.innerHTML = '<h5 style="margin:0;font-weight:500;line-height:1.6;font-size:1.5rem;">' + 
+                                escapeHtml(item.question) + '</h5>';
+        }
+        
+        // Display answer on back
+        var backContent = '<div style="text-align: center;">';
+        backContent += '<h2 style="margin:0 0 12px 0;font-size:32px;font-weight:bold;line-height:1.4;color:#fff;">' + 
+                       escapeHtml(item.answer) + '</h2>';
+        
+        // Thêm pronunciation nếu có
+        if (item.pronunciation && item.pronunciation.trim()) {
+            backContent += '<p style="margin:8px 0 0 0;font-size:16px;color:#b0b0b0;font-style:italic;">' + 
+                          escapeHtml(item.pronunciation) + '</p>';
+        }
+        
+        // Thêm example nếu có
+        if (item.example && item.example.trim()) {
+            backContent += '<p style="margin:16px 0 0 0;font-size:14px;color:#d0d0d0;font-style:italic;">' + 
+                          '📝 ' + escapeHtml(item.example) + '</p>';
+        }
+        
+        backContent += '</div>';
+        backEl.innerHTML = backContent;
+        counterEl.textContent = (i + 1) + ' / ' + data.length;
+        renderNav();
+    }
+
+    function escapeHtml(text) {
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    function setIndex(n) {
+        if (!data.length) return;
+        i = (n < 0) ? data.length - 1 : (n >= data.length ? 0 : n);
+        flipEl.classList.remove('flipped');
+        hasFlippedCurrent = false;
+        render();
+    }
+
+    function markCompleted() {
+        var item = data[i];
+        if (!item) return;
+        var needUpdate = !completedSet.has(item.id) || dueSet.has(item.id);
+        if (!needUpdate) return;
+        
+        // Send to backend
+        fetch('{{ url_for("cards.review_card") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                card_id: item.id,
+                is_correct: true
+            })
+        }).then(function(response) {
+            if (response.ok) {
+                completedSet.add(item.id);
+                if (dueSet.has(item.id)) { 
+                    dueSet.delete(item.id); 
+                }
+                renderNav();
+            }
+        }).catch(function(err) {
+            console.error('Error:', err);
+        });
+    }
+
+    // Flip card on click
+    flipEl.addEventListener('click', function() {
+        flipEl.classList.toggle('flipped');
+        hasFlippedCurrent = flipEl.classList.contains('flipped');
+        if (hasFlippedCurrent) markCompleted();
+    });
+    
+    flipBtn.addEventListener('click', function() {
+        flipEl.classList.toggle('flipped');
+        hasFlippedCurrent = flipEl.classList.contains('flipped');
+        if (hasFlippedCurrent) markCompleted();
+    });
+    
+    prevBtn.addEventListener('click', function() { 
+        setIndex(i - 1); 
+    });
+    
+    nextBtn.addEventListener('click', function() {
+        var allowed = computeAllowedIndex();
+        if (i >= allowed) {
+            // Show toast notification
+            var t = document.createElement('div');
+            t.style = 'position:fixed;top:16px;right:16px;z-index:1000;background:#7f1d1d;color:#fecaca;border:1px solid #991b1b;border-radius:10px;padding:12px 14px;box-shadow:0 10px 25px rgba(0,0,0,.35);transition:opacity .3s ease, transform .3s ease;opacity:1;font-size:0.9rem;';
+            t.textContent = 'Hãy lật thẻ trước khi sang thẻ tiếp theo';
+            document.body.appendChild(t);
+            setTimeout(function() { 
+                t.style.opacity = '0'; 
+                t.style.transform = 'translateY(-8px)'; 
+            }, 1800);
+            setTimeout(function() { 
+                if (t && t.parentNode) { 
+                    t.parentNode.removeChild(t); 
+                } 
+            }, 2200);
+            return;
+        }
+        setIndex(i + 1);
+    });
+
+    render();
+})();
+</script>
+{% endblock %}
